@@ -197,7 +197,7 @@
 
   <section id="carrera">
     <h2>Carrera: ritmo y frecuencia cardíaca</h2>
-    <p class="lede">Solo actividades de correr (aire libre y treadmill), una por sesión, ordenadas de la más antigua a la más reciente. Sirve para ver si con el tiempo corre más rápido y con menos esfuerzo (FC más baja para un ritmo similar).</p>
+    <p class="lede">Solo actividades de correr (aire libre y treadmill), una por sesión, ordenadas de la más antigua a la más reciente. Sirve para ver si con el tiempo corre más rápido y con menos esfuerzo (FC más baja para un ritmo similar). Se excluyen sesiones más lentas de 10:00/km — normalmente caminatas registradas por error bajo el perfil de "Running".</p>
 
     <div class="card" style="margin-bottom:12px;">
       <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Última carrera vs. promedio</div>
@@ -681,8 +681,10 @@ function renderUltimaVsPromedio(runEntries){
 }
 
 /* ============ RENDER: CARRERA (pace & HR trends) ============ */
+const RUN_PACE_THRESHOLD_SEC = 600; // 10:00/km — excludes walks mislabeled as "Running"/"Treadmill Running"
+
 function renderCarrera(){
-  const runEntries = getFiltered().filter(e=> RUN_TYPES.includes(e.type) && e.avgPaceSec!=null)
+  const runEntries = getFiltered().filter(e=> RUN_TYPES.includes(e.type) && e.avgPaceSec!=null && e.avgPaceSec<=RUN_PACE_THRESHOLD_SEC)
     .slice().sort((a,b)=> a.date < b.date ? -1 : 1);
 
   const canvasRitmoFc = document.getElementById('chartRitmoFc');
