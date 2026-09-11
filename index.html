@@ -199,46 +199,44 @@
     <h2>Carrera: ritmo y frecuencia cardíaca</h2>
     <p class="lede">Solo actividades de correr (aire libre y treadmill), una por sesión, ordenadas de la más antigua a la más reciente. Sirve para ver si con el tiempo corre más rápido y con menos esfuerzo (FC más baja para un ritmo similar).</p>
 
-    <div class="card">
-      <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Ritmo promedio por sesión</div>
-      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.5;">Minutos que tardó en promedio por cada kilómetro. El eje está invertido a propósito: <strong style="color:var(--hivis);">entre más arriba está el punto, más rápido corrió</strong> ese día — así una tendencia hacia arriba significa que está mejorando.</div>
-      <div class="chart-box tall"><canvas id="chartRitmo" role="img" aria-label="Ritmo de carrera a través del tiempo"></canvas></div>
+    <div class="card" style="margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Última carrera vs. promedio</div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.5;">Compara su actividad de correr más reciente contra el promedio de todas las demás (dentro del año seleccionado arriba). Verde = mejor que su promedio; naranja = por debajo.</div>
+      <div class="table-scroll">
+        <table id="ultima-vs-promedio-table">
+          <thead><tr><th style="text-align:left;">Métrica</th><th>Promedio</th><th>Última actividad</th><th style="text-align:left;">Diferencia</th></tr></thead>
+          <tbody id="ultima-vs-promedio-tbody"></tbody>
+        </table>
+      </div>
     </div>
 
-    <div class="card" style="margin-top:12px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Frecuencia cardíaca promedio por sesión</div>
-      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.5;">Latidos por minuto (lpm) que su corazón mantuvo en promedio durante cada carrera. Si el ritmo (arriba) se mantiene similar pero esta línea baja con el tiempo, es señal de que ese esfuerzo le cuesta menos — una mejora de condición física.</div>
-      <div class="chart-box tall"><canvas id="chartFcCarrera" role="img" aria-label="Frecuencia cardíaca de carrera a través del tiempo"></canvas></div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Ritmo y esfuerzo cardíaco, juntos</div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.5;">Las dos líneas más importantes en un solo lugar. <strong style="color:var(--hivis);">Verde (eje izquierdo, invertido) = ritmo</strong> — arriba es más rápido. <strong style="color:var(--pulse);">Naranja (eje derecho) = frecuencia cardíaca</strong> — abajo es menos esfuerzo. La mejora real se ve cuando el verde sube mientras el naranja se mantiene igual o baja: corre más rápido sin que le cueste más.</div>
+      <div class="chart-box tall"><canvas id="chartRitmoFc" role="img" aria-label="Ritmo y frecuencia cardíaca combinados a través del tiempo"></canvas></div>
     </div>
 
     <div class="card" style="margin-top:12px;">
       <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Índice de eficiencia aeróbica</div>
-      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.5;">Su velocidad (km/h) dividida entre su frecuencia cardíaca promedio, multiplicada por 100 para que el número sea legible. No tiene una unidad física — es un índice comparativo: <strong style="color:var(--hivis);">entre más alto, más rápido corre por cada latido de esfuerzo</strong>. Si sube con el tiempo, está mejorando de verdad, más allá de simplemente esforzarse más.</div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.5;">Resume el gráfico de arriba en un solo número por carrera: velocidad dividida entre frecuencia cardíaca. No tiene una unidad física — es un índice comparativo: <strong style="color:var(--hivis);">entre más alto, más rápido corre por cada latido de esfuerzo</strong>. Si esta línea sube con el tiempo, está mejorando de verdad, más allá de simplemente esforzarse más.</div>
       <div class="chart-box tall"><canvas id="chartEficiencia" role="img" aria-label="Índice de eficiencia aeróbica a través del tiempo"></canvas></div>
     </div>
 
     <div class="card" style="margin-top:12px;">
       <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Dispersión: ritmo vs. frecuencia cardíaca</div>
-      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.5;">Cada punto es una carrera: qué tan rápido corrió (izquierda = más rápido) contra qué tan alto estuvo su corazón en promedio (abajo = menos esfuerzo). Los colores separan los años. Si la nube de puntos de los años más recientes está más abajo y a la izquierda que la de los años viejos, significa que corre más rápido gastando menos esfuerzo cardíaco — la señal más clara de mejora física.</div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.5;">Cada punto es una carrera: qué tan rápido corrió (izquierda = más rápido) contra qué tan alto estuvo su corazón en promedio (abajo = menos esfuerzo). Los colores separan los años. Si la nube de puntos de los años más recientes está más abajo y a la izquierda que la de los años viejos, significa que corre más rápido gastando menos esfuerzo cardíaco.</div>
       <div class="chart-box tall"><canvas id="chartScatter" role="img" aria-label="Dispersión de ritmo contra frecuencia cardíaca por año"></canvas></div>
     </div>
 
     <div class="card" style="margin-top:12px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Cadencia de zancada</div>
-      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.5;">Pasos por minuto en promedio durante cada carrera. Una cadencia más alta suele asociarse con una técnica más eficiente y menor riesgo de lesión — no es que "más siempre sea mejor", pero una tendencia hacia arriba suele reflejar una mejor forma de correr.</div>
-      <div class="chart-box tall"><canvas id="chartCadencia" role="img" aria-label="Cadencia de zancada a través del tiempo"></canvas></div>
-    </div>
-
-    <div class="card" style="margin-top:12px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Efecto de entrenamiento aeróbico (TE)</div>
-      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.5;">Garmin califica cada sesión de 0 a 5 según cuánto benefició a su condición aeróbica: cerca de 0-1 es muy suave, 3-4 es un entrenamiento efectivo, 5 es un esfuerzo máximo. Aquí se muestra el promedio por mes. Meses muy bajos seguidos pueden significar poco estímulo; muy altos seguidos, riesgo de sobreentrenamiento.</div>
-      <div class="chart-box tall"><canvas id="chartTE" role="img" aria-label="Efecto de entrenamiento aeróbico promedio por mes"></canvas></div>
-    </div>
-
-    <div class="card" style="margin-top:12px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Frecuencia cardíaca máxima por sesión</div>
-      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.5;">El pico de frecuencia cardíaca alcanzado en cada carrera (no el promedio). Picos puntuales muy altos suelen coincidir con sesiones de intervalos o cuestas; si el patrón general sube con los años, puede valer la pena conversarlo con un médico deportivo.</div>
-      <div class="chart-box tall"><canvas id="chartFcMax" role="img" aria-label="Frecuencia cardíaca máxima a través del tiempo"></canvas></div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Resumen mensual: cadencia, esfuerzo y estímulo</div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.5;">Promedio por mes de tres indicadores de apoyo. <strong>Cadencia</strong>: pasos por minuto — más alta suele ser mejor técnica. <strong>FC máxima</strong>: el pico más alto alcanzado ese mes, no el promedio — picos altos sostenidos en el tiempo valen la pena comentarlos con un médico deportivo. <strong>TE (efecto de entrenamiento)</strong>: 0 a 5 según Garmin — 0-1 muy suave, 3-4 efectivo, 5 esfuerzo máximo; meses muy bajos o muy altos seguidos son la señal a vigilar, no el número de un solo mes.</div>
+      <div class="table-scroll">
+        <table id="resumen-mensual-table">
+          <thead><tr><th style="text-align:left;">Mes</th><th>Sesiones</th><th>Cadencia</th><th>FC máxima</th><th>TE</th></tr></thead>
+          <tbody id="resumen-mensual-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </section>
 
@@ -540,7 +538,7 @@ function renderKPIs(){
 }
 
 /* ============ RENDER: TIPOS ============ */
-let chartTipos, chartVolumen, chartRitmo, chartFcCarrera, chartEficiencia, chartScatter, chartCadencia, chartTE, chartFcMax;
+let chartTipos, chartVolumen, chartRitmoFc, chartEficiencia, chartScatter;
 
 function renderTipos(){
   const canvas = document.getElementById('chartTipos');
@@ -621,64 +619,113 @@ function renderVolumen(){
   });
 }
 
+/* ============ RENDER: ÚLTIMA CARRERA VS PROMEDIO ============ */
+function speedKmh(e){ return (e.distance>0 && e.timeSec>0) ? e.distance/(e.timeSec/3600) : null; }
+function effIdx(e){ const s = speedKmh(e); return (s!=null && e.avgHr) ? (s/e.avgHr)*100 : null; }
+
+function renderUltimaVsPromedio(runEntries){
+  const tbody = document.getElementById('ultima-vs-promedio-tbody');
+  const sorted = runEntries.slice().sort((a,b)=> a.date < b.date ? 1 : -1); // newest first
+  const latest = sorted[0];
+  const pool = sorted.slice(1); // everything except the latest
+
+  if(pool.length < 3){
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:left;color:var(--ink-faint);">Aún no hay suficiente historial para comparar (se necesitan al menos 3 carreras previas).</td></tr>`;
+    return;
+  }
+
+  function avg(field){ const v = pool.filter(e=>e[field]!=null); return v.length? v.reduce((s,e)=>s+e[field],0)/v.length : null; }
+  const avgEffs = pool.filter(e=>effIdx(e)!=null).map(effIdx);
+  const avgEff = avgEffs.length ? avgEffs.reduce((a,b)=>a+b,0)/avgEffs.length : null;
+
+  // row: [label, avgValue, latestValue, formatter, higherIsBetter(null=neutral)]
+  const rows = [
+    ['Distancia', avg('distance'), latest.distance, v=>fmtKm(v), null],
+    ['Duración', avg('timeSec'), latest.timeSec, v=>fmtDuration(v), null],
+    ['Ritmo promedio', avg('avgPaceSec'), latest.avgPaceSec, v=>fmtPace(v), false], // lower seconds = faster = better
+    ['FC promedio', avg('avgHr'), latest.avgHr, v=>fmtInt(v)+' lpm', null],
+    ['FC máxima', avg('maxHr'), latest.maxHr, v=>fmtInt(v)+' lpm', null],
+    ['Cadencia', avg('cadence'), latest.cadence, v=>fmtInt(v)+' spm', true],
+    ['Efecto de entrenamiento (TE)', avg('aerobicTE'), latest.aerobicTE, v=>fmtNum(v,2), null],
+    ['Calorías', avg('calories'), latest.calories, v=>fmtInt(v), null],
+    ['Ascenso total', avg('totalAscent'), latest.totalAscent, v=>v!=null?fmtInt(v)+' m':'—', null],
+    ['Índice de eficiencia aeróbica', avgEff, effIdx(latest), v=>v!=null?fmtNum(v,2):'—', true],
+    ['Mejor ritmo puntual', avg('bestPaceSec'), latest.bestPaceSec, v=>fmtPace(v), false],
+  ];
+
+  tbody.innerHTML = rows.map(([label, avgVal, curVal, fmt, higherBetter])=>{
+    let diffHtml = '—';
+    if(avgVal!=null && curVal!=null){
+      const diff = curVal - avgVal;
+      const isBetter = higherBetter===null ? null : (higherBetter ? diff>0 : diff<0);
+      const color = isBetter===null ? 'var(--ink-soft)' : (isBetter ? 'var(--hivis)' : 'var(--pulse)');
+      let diffText;
+      if(label==='Ritmo promedio' || label==='Mejor ritmo puntual'){
+        const sign = diff>=0 ? '+' : '';
+        diffText = `${sign}${Math.round(diff)} seg/km`;
+      } else if(label==='Duración'){
+        diffText = fmtDuration(Math.abs(diff)) + (diff>=0?' más':' menos');
+      } else {
+        const pctd = avgVal!==0 ? (diff/avgVal*100) : null;
+        diffText = pctd!=null ? `${pctd>=0?'+':''}${pctd.toFixed(1)}%` : `${diff>=0?'+':''}${fmtNum(diff,1)}`;
+      }
+      diffHtml = `<span style="color:${color};font-family:var(--font-mono);">${diffText}</span>`;
+    }
+    return `<tr>
+      <td style="text-align:left;font-family:var(--font-body);">${label}</td>
+      <td>${fmt(avgVal)}</td>
+      <td style="font-weight:600;">${fmt(curVal)}</td>
+      <td style="text-align:left;">${diffHtml}</td>
+    </tr>`;
+  }).join('');
+}
+
 /* ============ RENDER: CARRERA (pace & HR trends) ============ */
 function renderCarrera(){
   const runEntries = getFiltered().filter(e=> RUN_TYPES.includes(e.type) && e.avgPaceSec!=null)
     .slice().sort((a,b)=> a.date < b.date ? -1 : 1);
 
-  const canvasRitmo = document.getElementById('chartRitmo');
-  const canvasFc = document.getElementById('chartFcCarrera');
+  const canvasRitmoFc = document.getElementById('chartRitmoFc');
   const pbGrid = document.getElementById('pb-grid');
 
   if(runEntries.length===0){
-    if(chartRitmo){chartRitmo.destroy(); chartRitmo=null;}
-    if(chartFcCarrera){chartFcCarrera.destroy(); chartFcCarrera=null;}
+    if(chartRitmoFc){chartRitmoFc.destroy(); chartRitmoFc=null;}
     if(chartEficiencia){chartEficiencia.destroy(); chartEficiencia=null;}
     if(chartScatter){chartScatter.destroy(); chartScatter=null;}
-    if(chartCadencia){chartCadencia.destroy(); chartCadencia=null;}
-    if(chartTE){chartTE.destroy(); chartTE=null;}
-    if(chartFcMax){chartFcMax.destroy(); chartFcMax=null;}
+    document.getElementById('resumen-mensual-tbody').innerHTML = '';
     pbGrid.innerHTML = `<div class="kpi"><div class="label">Sin datos de carrera</div><div class="value">—</div></div>`;
+    document.getElementById('ultima-vs-promedio-tbody').innerHTML = '';
     return;
   }
 
+  renderUltimaVsPromedio(runEntries);
+
   const labels = runEntries.map(e=>fmtDate(e.date));
 
-  if(chartRitmo) chartRitmo.destroy();
-  chartRitmo = new Chart(canvasRitmo, {
+  if(chartRitmoFc) chartRitmoFc.destroy();
+  chartRitmoFc = new Chart(canvasRitmoFc, {
     type:'line',
-    data:{ labels, datasets:[{
-      label:'Ritmo promedio (min/km)',
-      data: runEntries.map(e=> +(e.avgPaceSec/60).toFixed(2)),
-      borderColor:'#D6F24C', backgroundColor:'rgba(214,242,76,0.12)',
-      tension:0.25, pointRadius:2, fill:true
-    }]},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{ ticks:{color:'#9FADB8', maxRotation:60, minRotation:60, font:{size:9}, autoSkip:true, maxTicksLimit:14}, grid:{display:false} },
-        y:{ reverse:true, ticks:{color:'#9FADB8', callback:v=>fmtPace(v*60)}, grid:{color:'#2C3640'}, title:{display:true,text:'más rápido ↑',color:'#9FADB8'} }
+    data:{ labels, datasets:[
+      {
+        label:'Ritmo (min/km)', yAxisID:'yPace',
+        data: runEntries.map(e=> +(e.avgPaceSec/60).toFixed(2)),
+        borderColor:'#D6F24C', backgroundColor:'rgba(214,242,76,0.10)',
+        tension:0.25, pointRadius:2, fill:true
+      },
+      {
+        label:'FC promedio (lpm)', yAxisID:'yHr',
+        data: runEntries.map(e=> e.avgHr!=null ? e.avgHr : null),
+        borderColor:'#FF6E52', backgroundColor:'rgba(255,110,82,0.06)',
+        tension:0.25, pointRadius:2, fill:false, spanGaps:true
       }
-    }
-  });
-
-  if(chartFcCarrera) chartFcCarrera.destroy();
-  const hrEntries = runEntries.filter(e=>e.avgHr!=null);
-  chartFcCarrera = new Chart(canvasFc, {
-    type:'line',
-    data:{ labels: hrEntries.map(e=>fmtDate(e.date)), datasets:[{
-      label:'FC promedio (lpm)',
-      data: hrEntries.map(e=>e.avgHr),
-      borderColor:'#FF6E52', backgroundColor:'rgba(255,110,82,0.12)',
-      tension:0.25, pointRadius:2, fill:true
-    }]},
+    ]},
     options:{
       responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
+      plugins:{legend:{display:true, position:'top', labels:{color:'#EDEAE1', boxWidth:10, font:{size:11}}}},
       scales:{
         x:{ ticks:{color:'#9FADB8', maxRotation:60, minRotation:60, font:{size:9}, autoSkip:true, maxTicksLimit:14}, grid:{display:false} },
-        y:{ ticks:{color:'#9FADB8', callback:v=>v+' lpm'}, grid:{color:'#2C3640'} }
+        yPace:{ position:'left', reverse:true, ticks:{color:'#D6F24C', callback:v=>fmtPace(v*60)}, grid:{color:'#2C3640'}, title:{display:true,text:'ritmo — más rápido ↑',color:'#D6F24C',font:{size:10}} },
+        yHr:{ position:'right', ticks:{color:'#FF6E52', callback:v=>v+' lpm'}, grid:{display:false}, title:{display:true,text:'FC — menos esfuerzo ↓',color:'#FF6E52',font:{size:10}} }
       }
     }
   });
@@ -731,71 +778,25 @@ function renderCarrera(){
     }
   });
 
-  // 3. Cadencia de zancada
-  const cadEntries = runEntries.filter(e=>e.cadence!=null);
-  if(chartCadencia) chartCadencia.destroy();
-  chartCadencia = new Chart(document.getElementById('chartCadencia'), {
-    type:'line',
-    data:{ labels: cadEntries.map(e=>fmtDate(e.date)), datasets:[{
-      label:'Cadencia (pasos/min)',
-      data: cadEntries.map(e=>e.cadence),
-      borderColor:'#B98CF2', backgroundColor:'rgba(185,140,242,0.12)',
-      tension:0.25, pointRadius:2, fill:true
-    }]},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{ ticks:{color:'#9FADB8', maxRotation:60, minRotation:60, font:{size:9}, autoSkip:true, maxTicksLimit:14}, grid:{display:false} },
-        y:{ ticks:{color:'#9FADB8', callback:v=>v+' spm'}, grid:{color:'#2C3640'} }
-      }
-    }
-  });
-
-  // 4. Efecto de entrenamiento aeróbico (TE), promedio mensual
-  const teEntries = getFiltered().filter(e=> RUN_TYPES.includes(e.type) && e.aerobicTE!=null);
-  const teMonths = [...new Set(teEntries.map(e=>monthKey(e.date)))].filter(Boolean).sort();
-  if(chartTE) chartTE.destroy();
-  chartTE = new Chart(document.getElementById('chartTE'), {
-    type:'bar',
-    data:{ labels: teMonths.map(monthLabelFromKey), datasets:[{
-      label:'TE promedio',
-      data: teMonths.map(m=>{
-        const rows = teEntries.filter(e=>monthKey(e.date)===m);
-        return +(rows.reduce((s,e)=>s+e.aerobicTE,0)/rows.length).toFixed(2);
-      }),
-      backgroundColor:'#F2C94C', borderRadius:4
-    }]},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{ ticks:{color:'#9FADB8', maxRotation:60, minRotation:60, font:{size:10}}, grid:{display:false} },
-        y:{ min:0, max:5, ticks:{color:'#9FADB8'}, grid:{color:'#2C3640'} }
-      }
-    }
-  });
-
-  // 5. FC máxima por sesión
-  const maxHrEntries = runEntries.filter(e=>e.maxHr!=null);
-  if(chartFcMax) chartFcMax.destroy();
-  chartFcMax = new Chart(document.getElementById('chartFcMax'), {
-    type:'line',
-    data:{ labels: maxHrEntries.map(e=>fmtDate(e.date)), datasets:[{
-      label:'FC máxima (lpm)',
-      data: maxHrEntries.map(e=>e.maxHr),
-      borderColor:'#FF6E52', backgroundColor:'rgba(255,110,82,0.06)',
-      borderDash:[4,3], tension:0.2, pointRadius:2, fill:true
-    }]},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{ ticks:{color:'#9FADB8', maxRotation:60, minRotation:60, font:{size:9}, autoSkip:true, maxTicksLimit:14}, grid:{display:false} },
-        y:{ ticks:{color:'#9FADB8', callback:v=>v+' lpm'}, grid:{color:'#2C3640'} }
-      }
-    }
-  });
+  // Resumen mensual: cadencia, FC máxima y TE promedio por mes
+  const monthEntries = runEntries; // already the year-filtered running entries
+  const months = [...new Set(monthEntries.map(e=>monthKey(e.date)))].filter(Boolean).sort().reverse();
+  const monthlyTbody = document.getElementById('resumen-mensual-tbody');
+  monthlyTbody.innerHTML = months.map(m=>{
+    const rows = monthEntries.filter(e=>monthKey(e.date)===m);
+    const avg = (field)=>{ const v = rows.filter(e=>e[field]!=null); return v.length? v.reduce((s,e)=>s+e[field],0)/v.length : null; };
+    const cad = avg('cadence');
+    const maxHrRows = rows.filter(e=>e.maxHr!=null);
+    const peakHr = maxHrRows.length ? Math.max(...maxHrRows.map(e=>e.maxHr)) : null;
+    const te = avg('aerobicTE');
+    return `<tr>
+      <td style="text-align:left;font-family:var(--font-body);">${monthLabelFromKey(m)}</td>
+      <td>${rows.length}</td>
+      <td>${cad!=null?fmtInt(cad)+' spm':'—'}</td>
+      <td>${peakHr!=null?fmtInt(peakHr)+' lpm':'—'}</td>
+      <td>${te!=null?fmtNum(te,1):'—'}</td>
+    </tr>`;
+  }).join('');
 
   // Personal bests
   const fastest = runEntries.reduce((best,e)=> (!best || e.avgPaceSec<best.avgPaceSec) ? e : best, null);
