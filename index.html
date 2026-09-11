@@ -137,6 +137,33 @@
 
   .config-note{font-size:11.5px;color:var(--ink-faint);margin-top:10px;line-height:1.5;}
 
+  /* printable report */
+  .report-doc{
+    background:#ffffff;color:#1a1a1a;border-radius:8px;padding:28px 32px;
+    font-family:var(--font-body);
+  }
+  .report-doc h1{font-family:var(--font-display);font-size:20px;margin:0 0 4px;text-transform:uppercase;color:#111;}
+  .report-doc .rd-sub{font-size:12px;color:#555;margin-bottom:18px;}
+  .report-doc h2{font-family:var(--font-display);font-size:14px;text-transform:uppercase;color:#111;border-bottom:1.5px solid #ccc;padding-bottom:5px;margin:22px 0 10px;}
+  .report-doc h2:first-of-type{margin-top:0;}
+  .report-doc table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px;}
+  .report-doc th{text-align:left;font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:#777;padding:5px 7px;border-bottom:1px solid #999;}
+  .report-doc td{padding:5px 7px;border-bottom:1px solid #e2e2e2;font-family:var(--font-mono);}
+  .report-doc td:first-child, .report-doc td.rd-left{font-family:var(--font-body);}
+  .report-doc .rd-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:6px;}
+  .report-doc .rd-kpi{border:1px solid #ddd;border-radius:6px;padding:8px 10px;}
+  .report-doc .rd-kpi .rd-label{font-size:9px;text-transform:uppercase;color:#888;letter-spacing:.04em;}
+  .report-doc .rd-kpi .rd-value{font-family:var(--font-mono);font-size:15px;font-weight:600;color:#111;}
+  .report-doc .rd-note{font-size:10px;color:#888;margin-top:16px;line-height:1.5;border-top:1px solid #ddd;padding-top:10px;}
+  .report-doc .rd-empty{font-size:12px;color:#888;padding:20px 0;}
+
+  @media print{
+    body *{ visibility:hidden; }
+    #report-content, #report-content *{ visibility:visible; }
+    #report-content{ position:absolute; left:0; top:0; width:100%; }
+    .report-doc{ padding:0; }
+  }
+
   @media (max-width:600px){
     .wrap{padding:0 16px;}
     header h1{font-size:19px;}
@@ -157,6 +184,7 @@
       <a href="#volumen" data-target="volumen" class="tab-link">Volumen</a>
       <a href="#carrera" data-target="carrera" class="tab-link">Carrera</a>
       <a href="#historial" data-target="historial" class="tab-link">Historial</a>
+      <a href="#reporte" data-target="reporte" class="tab-link">Reporte</a>
       <a href="#datos" data-target="datos" class="tab-link">Datos</a>
       <select id="filter-year" style="margin-left:auto;background:var(--surface-2);border:1px solid var(--rule-strong);color:var(--ink);border-radius:8px;padding:0 10px;height:32px;font-family:inherit;font-size:12.5px;align-self:center;">
         <option value="">Todos los años</option>
@@ -255,6 +283,32 @@
         <tbody id="historial-tbody"></tbody>
       </table>
     </div>
+  </section>
+
+  <section id="reporte">
+    <h2>Generar reporte para mi entrenador</h2>
+    <p class="lede">Un resumen imprimible con todos los datos y KPIs relevantes para que su entrenador pueda evaluar su condición. Elija la ventana de tiempo y luego imprima o guarde como PDF.</p>
+
+    <div class="card" style="margin-bottom:14px;">
+      <div class="form-actions" style="flex-wrap:wrap;">
+        <label style="font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;">
+          Período:
+          <select id="report-window">
+            <option value="28">Últimas 4 semanas</option>
+            <option value="56">Últimas 8 semanas</option>
+            <option value="84" selected>Últimas 12 semanas</option>
+            <option value="">Todo el historial</option>
+          </select>
+        </label>
+        <label style="font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;">
+          Nombre del atleta:
+          <input type="text" id="report-name" placeholder="(opcional)" style="width:160px;">
+        </label>
+        <button type="button" class="ghost" id="print-report-btn">Imprimir / Guardar como PDF</button>
+      </div>
+    </div>
+
+    <div id="report-content"></div>
   </section>
 
   <section id="datos">
@@ -847,6 +901,148 @@ function renderHistorial(){
   }).join('');
 }
 
+/* ============ RENDER: REPORTE PARA ENTRENADOR ============ */
+function computeReportPools(windowVal){
+  const sortedAll = entries.slice().sort((a,b)=> a.date < b.date ? 1 : -1); // newest first, full dataset
+  if(sortedAll.length===0) return { period: [], prevPeriod: [] };
+  if(!windowVal) return { period: sortedAll, prevPeriod: [] };
+  const days = parseInt(windowVal,10);
+  const anchor = new Date(sortedAll[0].date).getTime();
+  const cutoff = anchor - days*86400000;
+  const prevCutoff = anchor - 2*days*86400000;
+  const period = sortedAll.filter(e=> new Date(e.date).getTime() >= cutoff);
+  const prevPeriod = sortedAll.filter(e=>{ const t=new Date(e.date).getTime(); return t>=prevCutoff && t<cutoff; });
+  return { period, prevPeriod };
+}
+
+function renderReporte(){
+  const container = document.getElementById('report-content');
+  if(entries.length===0){
+    container.innerHTML = `<div class="report-doc"><div class="rd-empty">No hay datos para generar un reporte. Suba un CSV primero en la pestaña "Datos".</div></div>`;
+    return;
+  }
+  const windowVal = document.getElementById('report-window').value;
+  const name = document.getElementById('report-name').value.trim();
+  const { period, prevPeriod } = computeReportPools(windowVal);
+
+  if(period.length===0){
+    container.innerHTML = `<div class="report-doc"><div class="rd-empty">No hay actividades registradas en este período.</div></div>`;
+    return;
+  }
+
+  const windowLabelMap = {'28':'Últimas 4 semanas','56':'Últimas 8 semanas','84':'Últimas 12 semanas','':'Todo el historial'};
+  const periodLabel = windowLabelMap[windowVal] || 'Período seleccionado';
+  const rangeStr = `${fmtDate(period[period.length-1].date)} — ${fmtDate(period[0].date)}`;
+
+  const totalSessions = period.length;
+  const totalTimeSec = period.reduce((s,e)=>s+(e.timeSec||0),0);
+  const totalDist = period.filter(e=>LAND_TYPES.includes(e.type)).reduce((s,e)=>s+(e.distance||0),0);
+  const totalCal = period.reduce((s,e)=>s+(e.calories||0),0);
+
+  const runPool = period.filter(e=> RUN_TYPES.includes(e.type) && e.avgPaceSec!=null && e.avgPaceSec<=RUN_PACE_THRESHOLD_SEC);
+  function avg(arr, field){ const v=arr.filter(e=>e[field]!=null); return v.length? v.reduce((s,e)=>s+e[field],0)/v.length : null; }
+  const runCount = runPool.length;
+  const runDist = runPool.reduce((s,e)=>s+(e.distance||0),0);
+  const avgPace = avg(runPool,'avgPaceSec');
+  const avgHr = avg(runPool,'avgHr');
+  const peakHrRows = runPool.filter(e=>e.maxHr!=null);
+  const peakHr = peakHrRows.length ? Math.max(...peakHrRows.map(e=>e.maxHr)) : null;
+  const avgCad = avg(runPool,'cadence');
+  const avgTE = avg(runPool,'aerobicTE');
+  const effs = runPool.filter(e=>effIdx(e)!=null).map(effIdx);
+  const avgEff = effs.length ? effs.reduce((a,b)=>a+b,0)/effs.length : null;
+
+  let comparisonHtml = '';
+  if(windowVal && prevPeriod.length>0){
+    const prevRunPool = prevPeriod.filter(e=> RUN_TYPES.includes(e.type) && e.avgPaceSec!=null && e.avgPaceSec<=RUN_PACE_THRESHOLD_SEC);
+    if(prevRunPool.length>=2){
+      const prevEffs = prevRunPool.filter(e=>effIdx(e)!=null).map(effIdx);
+      const prevAvgEff = prevEffs.length ? prevEffs.reduce((a,b)=>a+b,0)/prevEffs.length : null;
+      const rows = [
+        ['Carreras', prevRunPool.length, runCount, v=>fmtInt(v)],
+        ['Distancia total', prevRunPool.reduce((s,e)=>s+(e.distance||0),0), runDist, v=>fmtKm(v)],
+        ['Ritmo promedio', avg(prevRunPool,'avgPaceSec'), avgPace, v=>fmtPace(v)],
+        ['FC promedio', avg(prevRunPool,'avgHr'), avgHr, v=>v!=null?fmtInt(v)+' lpm':'—'],
+        ['Índice de eficiencia', prevAvgEff, avgEff, v=>v!=null?fmtNum(v,2):'—'],
+      ];
+      comparisonHtml = `
+        <h2>Comparación con el período anterior (mismo largo)</h2>
+        <table><thead><tr><th>Métrica</th><th>Anterior</th><th>Actual</th></tr></thead><tbody>
+        ${rows.map(([label,prevV,curV,fmt])=>`<tr><td class="rd-left">${label}</td><td>${fmt(prevV)}</td><td>${fmt(curV)}</td></tr>`).join('')}
+        </tbody></table>`;
+    }
+  }
+
+  let pbHtml = '';
+  if(runPool.length>0){
+    const fastest = runPool.reduce((b,e)=>(!b||e.avgPaceSec<b.avgPaceSec)?e:b,null);
+    const longestDist = runPool.reduce((b,e)=>(!b||(e.distance||0)>(b.distance||0))?e:b,null);
+    const longestTime = runPool.reduce((b,e)=>(!b||(e.timeSec||0)>(b.timeSec||0))?e:b,null);
+    pbHtml = `
+      <h2>Mejores marcas del período</h2>
+      <div class="rd-kpis">
+        <div class="rd-kpi"><div class="rd-label">Ritmo más rápido</div><div class="rd-value">${fmtPace(fastest.avgPaceSec)}</div></div>
+        <div class="rd-kpi"><div class="rd-label">Carrera más larga</div><div class="rd-value">${fmtKm(longestDist.distance)}</div></div>
+        <div class="rd-kpi"><div class="rd-label">Duración más larga</div><div class="rd-value">${fmtDuration(longestTime.timeSec)}</div></div>
+      </div>`;
+  }
+
+  const tableRows = period.map(e=>{
+    const distLabel = e.type==='Pool Swim' ? (e.distance!=null?fmtInt(e.distance)+' m':'—') : (e.distance? fmtKm(e.distance):'—');
+    const paceLabel = (RUN_TYPES.includes(e.type) && e.avgPaceSec!=null) ? fmtPace(e.avgPaceSec) : '—';
+    return `<tr>
+      <td class="rd-left">${fmtDate(e.date)}</td>
+      <td class="rd-left">${e.type}</td>
+      <td>${distLabel}</td>
+      <td>${fmtDuration(e.timeSec)}</td>
+      <td>${paceLabel}</td>
+      <td>${e.avgHr!=null?fmtInt(e.avgHr):'—'}</td>
+      <td>${e.cadence!=null?fmtInt(e.cadence):'—'}</td>
+      <td>${e.calories!=null?fmtInt(e.calories):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="report-doc">
+      <h1>Reporte de entrenamiento${name?' — '+name:''}</h1>
+      <div class="rd-sub">Generado el ${fmtDate(new Date().toISOString())} · Período: ${periodLabel} (${rangeStr})</div>
+
+      <h2 style="margin-top:0;">Resumen general del período</h2>
+      <div class="rd-kpis">
+        <div class="rd-kpi"><div class="rd-label">Actividades totales</div><div class="rd-value">${fmtInt(totalSessions)}</div></div>
+        <div class="rd-kpi"><div class="rd-label">Tiempo total</div><div class="rd-value">${fmtHours(totalTimeSec)}</div></div>
+        <div class="rd-kpi"><div class="rd-label">Distancia (correr/caminar)</div><div class="rd-value">${fmtKm(totalDist)}</div></div>
+        <div class="rd-kpi"><div class="rd-label">Calorías totales</div><div class="rd-value">${fmtInt(totalCal)}</div></div>
+      </div>
+
+      <h2>Carrera (solo running, excluye sesiones más lentas de 10:00/km)</h2>
+      <div class="rd-kpis">
+        <div class="rd-kpi"><div class="rd-label">Carreras</div><div class="rd-value">${fmtInt(runCount)}</div></div>
+        <div class="rd-kpi"><div class="rd-label">Distancia corrida</div><div class="rd-value">${fmtKm(runDist)}</div></div>
+        <div class="rd-kpi"><div class="rd-label">Ritmo promedio</div><div class="rd-value">${fmtPace(avgPace)}</div></div>
+        <div class="rd-kpi"><div class="rd-label">FC promedio</div><div class="rd-value">${avgHr!=null?fmtInt(avgHr)+' lpm':'—'}</div></div>
+        <div class="rd-kpi"><div class="rd-label">FC máxima (pico)</div><div class="rd-value">${peakHr!=null?fmtInt(peakHr)+' lpm':'—'}</div></div>
+        <div class="rd-kpi"><div class="rd-label">Cadencia promedio</div><div class="rd-value">${avgCad!=null?fmtInt(avgCad)+' spm':'—'}</div></div>
+        <div class="rd-kpi"><div class="rd-label">TE promedio</div><div class="rd-value">${avgTE!=null?fmtNum(avgTE,2):'—'}</div></div>
+        <div class="rd-kpi"><div class="rd-label">Índice de eficiencia</div><div class="rd-value">${avgEff!=null?fmtNum(avgEff,2):'—'}</div></div>
+      </div>
+
+      ${comparisonHtml}
+      ${pbHtml}
+
+      <h2>Actividades del período (${period.length})</h2>
+      <table>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Dist.</th><th>Tiempo</th><th>Ritmo</th><th>FC prom</th><th>Cadencia</th><th>Cal.</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+
+      <div class="rd-note">
+        Distancias asumidas en kilómetros según exportación de Garmin. Las métricas de "Carrera" excluyen sesiones de running/treadmill más lentas de 10:00/km (usualmente caminatas registradas por error bajo ese perfil). Efecto de entrenamiento (TE) en escala Garmin 0–5: 0–1 muy suave, 3–4 entrenamiento efectivo, 5 esfuerzo máximo. Índice de eficiencia = (velocidad km/h ÷ FC promedio) × 100, sin unidad física, solo comparativo.
+      </div>
+    </div>
+  `;
+}
+
 /* ============ RENDER ALL ============ */
 function safe(name, fn){ try{ fn(); }catch(e){ console.error('Error rendering '+name, e); } }
 function renderAll(){
@@ -857,6 +1053,7 @@ function renderAll(){
   safe('volumen', renderVolumen);
   safe('carrera', renderCarrera);
   safe('historial', renderHistorial);
+  safe('reporte', renderReporte);
 }
 
 /* ============ CSV UPLOAD ============ */
@@ -898,6 +1095,15 @@ document.getElementById('filter-year').addEventListener('change', (ev)=>{
   safe('carrera', renderCarrera);
   safe('historial', renderHistorial);
 });
+
+/* ============ REPORTE ============ */
+const REPORT_NAME_LS_KEY = 'mi_actividad_report_name';
+document.getElementById('report-window').addEventListener('change', ()=> safe('reporte', renderReporte));
+document.getElementById('report-name').addEventListener('input', (ev)=>{
+  localStorage.setItem(REPORT_NAME_LS_KEY, ev.target.value);
+  safe('reporte', renderReporte);
+});
+document.getElementById('print-report-btn').addEventListener('click', ()=> window.print());
 
 /* ============ EXPORT / IMPORT / DELETE ============ */
 document.getElementById('export-btn').addEventListener('click', ()=>{
@@ -958,6 +1164,10 @@ window.addEventListener('scroll', ()=>{
 /* ============ INIT ============ */
 (function init(){
   try{ loadLocal(); }catch(e){ console.error('loadLocal failed', e); entries = []; }
+  try{
+    const savedName = localStorage.getItem(REPORT_NAME_LS_KEY);
+    if(savedName) document.getElementById('report-name').value = savedName;
+  }catch(e){}
   renderAll();
 })();
 </script>
