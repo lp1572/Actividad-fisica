@@ -1008,6 +1008,51 @@ function renderReporte(){
       </div>`;
   }
 
+  // Última carrera vs. tres promedios móviles (12 meses, 6 meses, 90 días) — independiente del período del reporte
+  let rollingHtml = '';
+  const allRunsEver = entries.filter(e=> RUN_TYPES.includes(e.type) && e.avgPaceSec!=null && e.avgPaceSec<=RUN_PACE_THRESHOLD_SEC)
+    .slice().sort((a,b)=> a.date < b.date ? 1 : -1);
+  if(allRunsEver.length>0){
+    const latestRun = allRunsEver[0];
+    function poolFor(days){
+      const cutoff = new Date(latestRun.date).getTime() - days*86400000;
+      return allRunsEver.slice(1).filter(e=> new Date(e.date).getTime() >= cutoff);
+    }
+    const pool12 = poolFor(365), pool6 = poolFor(182), pool90 = poolFor(90);
+    function avgOf(pool, field){ const v=pool.filter(e=>e[field]!=null); return v.length? v.reduce((s,e)=>s+e[field],0)/v.length : null; }
+    function effAvgOf(pool){ const v=pool.filter(e=>effIdx(e)!=null).map(effIdx); return v.length? v.reduce((a,b)=>a+b,0)/v.length : null; }
+
+    const rrows = [
+      ['Distancia', p=>avgOf(p,'distance'), latestRun.distance, v=>fmtKm(v)],
+      ['Duración', p=>avgOf(p,'timeSec'), latestRun.timeSec, v=>fmtDuration(v)],
+      ['Ritmo promedio', p=>avgOf(p,'avgPaceSec'), latestRun.avgPaceSec, v=>fmtPace(v)],
+      ['FC promedio', p=>avgOf(p,'avgHr'), latestRun.avgHr, v=>v!=null?fmtInt(v)+' lpm':'—'],
+      ['FC máxima', p=>avgOf(p,'maxHr'), latestRun.maxHr, v=>v!=null?fmtInt(v)+' lpm':'—'],
+      ['Cadencia', p=>avgOf(p,'cadence'), latestRun.cadence, v=>v!=null?fmtInt(v)+' spm':'—'],
+      ['Efecto de entrenamiento (TE)', p=>avgOf(p,'aerobicTE'), latestRun.aerobicTE, v=>v!=null?fmtNum(v,2):'—'],
+      ['Calorías', p=>avgOf(p,'calories'), latestRun.calories, v=>v!=null?fmtInt(v):'—'],
+      ['Ascenso total', p=>avgOf(p,'totalAscent'), latestRun.totalAscent, v=>v!=null?fmtInt(v)+' m':'—'],
+      ['Índice de eficiencia aeróbica', p=>effAvgOf(p), effIdx(latestRun), v=>v!=null?fmtNum(v,2):'—'],
+      ['Mejor ritmo puntual', p=>avgOf(p,'bestPaceSec'), latestRun.bestPaceSec, v=>fmtPace(v)],
+    ];
+
+    rollingHtml = `
+      <h2>Última carrera vs. promedios móviles</h2>
+      <table>
+        <thead><tr><th>Métrica</th><th>12 meses</th><th>6 meses</th><th>90 días</th><th>Última actividad</th></tr></thead>
+        <tbody>
+          ${rrows.map(([label, poolFn, latestVal, fmt])=>`<tr>
+            <td class="rd-left">${label}</td>
+            <td>${fmt(poolFn(pool12))}</td>
+            <td>${fmt(poolFn(pool6))}</td>
+            <td>${fmt(poolFn(pool90))}</td>
+            <td><strong>${fmt(latestVal)}</strong></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="rd-note" style="border-top:none;padding-top:0;margin-top:4px;">Fecha de la última actividad de carrera: ${fmtDate(latestRun.date)} — ${latestRun.title}. Los promedios de 12 meses, 6 meses y 90 días se calculan hacia atrás desde esa fecha, sin incluirla.</div>`;
+  }
+
   const tableRows = period.map(e=>{
     const distLabel = e.type==='Pool Swim' ? (e.distance!=null?fmtInt(e.distance)+' m':'—') : (e.distance? fmtKm(e.distance):'—');
     const paceLabel = (RUN_TYPES.includes(e.type) && e.avgPaceSec!=null) ? fmtPace(e.avgPaceSec) : '—';
@@ -1048,6 +1093,7 @@ function renderReporte(){
         <div class="rd-kpi"><div class="rd-label">Índice de eficiencia</div><div class="rd-value">${avgEff!=null?fmtNum(avgEff,2):'—'}</div></div>
       </div>
 
+      ${rollingHtml}
       ${comparisonHtml}
       ${pbHtml}
 
