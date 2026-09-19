@@ -228,8 +228,18 @@
     <p class="lede">Solo actividades de correr (aire libre y treadmill), una por sesión, ordenadas de la más antigua a la más reciente. Sirve para ver si con el tiempo corre más rápido y con menos esfuerzo (FC más baja para un ritmo similar). Se excluyen sesiones más lentas de 10:00/km — normalmente caminatas registradas por error bajo el perfil de "Running".</p>
 
     <div class="card" style="margin-bottom:12px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:4px;">Última carrera vs. promedio</div>
-      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.5;">Compara su actividad de correr más reciente contra el promedio de todas las demás (dentro del año seleccionado arriba). Verde = mejor que su promedio; naranja = por debajo.</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px;">
+        <div style="font-size:13px;font-weight:600;">Última carrera vs. promedio</div>
+        <label style="font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;">
+          Comparar contra:
+          <select id="compare-window">
+            <option value="90">Últimos 90 días</option>
+            <option value="182" selected>Últimos 6 meses</option>
+            <option value="365">Últimos 12 meses</option>
+          </select>
+        </label>
+      </div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;line-height:1.5;">Compara su actividad de correr más reciente contra el promedio del período elegido (sin contar la actividad de hoy). Verde = mejor que ese promedio; naranja = por debajo. Este promedio no depende del filtro de año de arriba — siempre mira hacia atrás desde su actividad más reciente.</div>
       <div class="table-scroll">
         <table id="ultima-vs-promedio-table">
           <thead><tr><th style="text-align:left;">Métrica</th><th>Promedio</th><th>Última actividad</th><th style="text-align:left;">Diferencia</th></tr></thead>
@@ -677,14 +687,26 @@ function renderVolumen(){
 function speedKmh(e){ return (e.distance>0 && e.timeSec>0) ? e.distance/(e.timeSec/3600) : null; }
 function effIdx(e){ const s = speedKmh(e); return (s!=null && e.avgHr) ? (s/e.avgHr)*100 : null; }
 
-function renderUltimaVsPromedio(runEntries){
+function renderUltimaVsPromedio(){
   const tbody = document.getElementById('ultima-vs-promedio-tbody');
-  const sorted = runEntries.slice().sort((a,b)=> a.date < b.date ? 1 : -1); // newest first
-  const latest = sorted[0];
-  const pool = sorted.slice(1); // everything except the latest
+  const windowDays = parseInt(document.getElementById('compare-window').value, 10);
+
+  // Always draws from the full dataset, ignoring the year filter — this is a
+  // fixed rolling baseline, not scoped to whatever year is browsed elsewhere.
+  const allRuns = entries.filter(e=> RUN_TYPES.includes(e.type) && e.avgPaceSec!=null && e.avgPaceSec<=RUN_PACE_THRESHOLD_SEC)
+    .slice().sort((a,b)=> a.date < b.date ? 1 : -1); // newest first
+
+  if(allRuns.length===0){
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:left;color:var(--ink-faint);">Sin carreras registradas todavía.</td></tr>`;
+    return;
+  }
+
+  const latest = allRuns[0];
+  const cutoff = new Date(latest.date).getTime() - windowDays*86400000;
+  const pool = allRuns.slice(1).filter(e=> new Date(e.date).getTime() >= cutoff);
 
   if(pool.length < 3){
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:left;color:var(--ink-faint);">Aún no hay suficiente historial para comparar (se necesitan al menos 3 carreras previas).</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:left;color:var(--ink-faint);">Aún no hay suficiente historial en este período para comparar (se necesitan al menos 3 carreras previas dentro de la ventana elegida).</td></tr>`;
     return;
   }
 
@@ -741,6 +763,8 @@ function renderCarrera(){
   const runEntries = getFiltered().filter(e=> RUN_TYPES.includes(e.type) && e.avgPaceSec!=null && e.avgPaceSec<=RUN_PACE_THRESHOLD_SEC)
     .slice().sort((a,b)=> a.date < b.date ? -1 : 1);
 
+  renderUltimaVsPromedio(); // independent of the year filter, always looks back from the most recent run
+
   const canvasRitmoFc = document.getElementById('chartRitmoFc');
   const pbGrid = document.getElementById('pb-grid');
 
@@ -750,11 +774,8 @@ function renderCarrera(){
     if(chartScatter){chartScatter.destroy(); chartScatter=null;}
     document.getElementById('resumen-mensual-tbody').innerHTML = '';
     pbGrid.innerHTML = `<div class="kpi"><div class="label">Sin datos de carrera</div><div class="value">—</div></div>`;
-    document.getElementById('ultima-vs-promedio-tbody').innerHTML = '';
     return;
   }
-
-  renderUltimaVsPromedio(runEntries);
 
   const labels = runEntries.map(e=>fmtDate(e.date));
 
@@ -1098,6 +1119,7 @@ document.getElementById('filter-year').addEventListener('change', (ev)=>{
 
 /* ============ REPORTE ============ */
 const REPORT_NAME_LS_KEY = 'mi_actividad_report_name';
+document.getElementById('compare-window').addEventListener('change', ()=> safe('ultima-vs-promedio', renderUltimaVsPromedio));
 document.getElementById('report-window').addEventListener('change', ()=> safe('reporte', renderReporte));
 document.getElementById('report-name').addEventListener('input', (ev)=>{
   localStorage.setItem(REPORT_NAME_LS_KEY, ev.target.value);
