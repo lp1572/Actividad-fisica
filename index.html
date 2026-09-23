@@ -1171,7 +1171,16 @@ document.getElementById('report-name').addEventListener('input', (ev)=>{
   localStorage.setItem(REPORT_NAME_LS_KEY, ev.target.value);
   safe('reporte', renderReporte);
 });
-document.getElementById('print-report-btn').addEventListener('click', ()=> window.print());
+document.getElementById('print-report-btn').addEventListener('click', ()=>{
+  const originalTitle = document.title;
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  document.title = `bitacora de actividades fisicas ${dateStr}`;
+  window.print();
+  const restore = ()=>{ document.title = originalTitle; window.removeEventListener('afterprint', restore); };
+  window.addEventListener('afterprint', restore);
+  setTimeout(restore, 5000); // fallback in case afterprint doesn't fire (some mobile browsers)
+});
 
 /* ============ EXPORT / IMPORT / DELETE ============ */
 document.getElementById('export-btn').addEventListener('click', ()=>{
